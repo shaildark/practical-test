@@ -1,0 +1,201 @@
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            Update Contact
+        </h2>
+    </x-slot>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+
+                    <div class="alert alert-success alert-dismissible d-none" id="alert_dialog">
+                        <div id="alert_message"></div>
+                        <a href="#" class="close" data-dismiss="alert" aria-label="close" id="dismiss_alert">&times;</a>
+                    </div>
+
+                    <form data-action="{{ route('contact.update', $contact->id) }}" method="POST" enctype="multipart/form-data" id="update-contact-form">
+                        @csrf
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ $contact->name }}">
+                            <small class="text-danger" id="err-name"></small>
+                            <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ $contact->email }}">
+                            <small class="text-danger" id="err-email"></small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="number" class="form-control" id="phone" name="phone" value="{{ $contact->phone }}">
+                            <small class="text-danger" id="err-phone"></small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gender">Gender</label>
+                            <small class="text-danger" id="err-gender"></small>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="gender" id="exampleRadios1" value="male" {{ $contact->gender == 'male' ? 'checked' : '' }}>
+                                <label class="form-check-label">
+                                    Male
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="gender" id="exampleRadios2" value="female" {{ $contact->gender == 'female' ? 'checked' : '' }}>
+                                <label class="form-check-label">
+                                    Female
+                                </label>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="gender" id="exampleRadios3" value="other" {{ $contact->gender == 'other' ? 'checked' : '' }}>
+                                <label class="form-check-label">
+                                    Other
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="formFile" class="form-label">Profile Image</label>
+                            <input class="form-control" type="file" name="profile" id="formFile">
+                            <small class="text-danger" id="err-profile"></small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="additional_formFile" class="form-label">Additional File</label>
+                            <input class="form-control" type="file" name="additional_file" id="additional_formFile">
+                            <small class="text-danger" id="err-additional_file"></small>
+                        </div>
+
+                        @foreach($customFields as $key => $field)
+                        <div class="form-group">
+                            <label for="{{ $field->name }}">{{$field->name}}</label>
+                            <input type="{{ $field->type }}" class="form-control" name="{{ $field->id }}" value="{{ array_key_exists($field->id, $contactCustomData) ? $contactCustomData[$field->id] : '' }}">
+                        </div>
+                        @endforeach
+
+                        <button type="submit" class="btn btn-primary" id="add_contact">Update Record</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+                    {{ __("You're logged in!") }}
+                </div>
+            </div>
+        </div>
+    </div> -->
+
+
+    <script
+        src="https://code.jquery.com/jquery-3.7.1.js"
+        integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+        crossorigin="anonymous"></script>
+    <script>
+        $(document).ready(function() {
+
+            $("#dismiss_alert").click(function() {
+                hideAlert()
+            })
+
+            var form = '#update-contact-form';
+
+            $(form).on('submit', function(event) {
+                event.preventDefault();
+                hideErrors();
+                hideAlert();
+
+                var url = $(this).attr('data-action');
+
+                var formData = new FormData(this);
+                formData.append('_method', 'PUT');
+                formData.append('_token', '{{ csrf_token() }}');
+
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    data: formData,
+                    dataType: 'JSON',
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    success: function(response) {
+                        hideErrors();
+                        displayAlert("success")
+                        
+                    },
+                    error: function(err) {
+                        if (err.status == 422 && err.responseJSON) {
+                            displayError(err.responseJSON);
+                        }
+                        displayAlert("fail")
+                    }
+                });
+            });
+
+        });
+
+        function displayError(errors) {
+
+            for (const [key, value] of Object.entries(errors)) {
+                var element = $("#err-" + key)
+                console.log(element)
+                if (element) {
+                    element.text(value[0])
+                }
+            }
+        }
+
+        function hideErrors() {
+            var errElement = [
+                "err-name",
+                "err-email",
+                "err-phone",
+                "err-gender",
+                "err-profile",
+                "err-additional_file",
+            ]
+
+            errElement.forEach(function(element) {
+                $("#" + element).text('')
+            })
+        }
+
+        function displayAlert(alertType) {
+            var alertDialog = $("#alert_dialog");
+            var alertMessage = $("#alert_message");
+            alertDialog.removeClass("d-none")
+            if (alertType == 'success') {
+                alertDialog.removeClass("alert-danger")
+                alertDialog.addClass("alert-success")
+                alertMessage.text("Record updated successfully")
+            }
+            if (alertType == 'fail') {
+                alertDialog.removeClass("alert-success")
+                alertDialog.addClass("alert-danger")
+                alertMessage.text("Something Went Wrong")
+            }
+        }
+
+        function hideAlert() {
+            var alertDialog = $("#alert_dialog");
+            alertDialog.addClass("d-none");
+            var alertMessage = $("#alert_message");
+            alertMessage.text("")
+        }
+    </script>
+</x-app-layout>
